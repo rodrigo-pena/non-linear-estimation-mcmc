@@ -3,35 +3,37 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setup
 N = 50;
-lambda = N;
-factor = sqrt(lambda/N);
-beta = 1;
-param = struct('maxit', 10000, 'tol', 0);
+lambda = 10 * N^2;
+beta = 0.4;
+x0 = [];
+param = struct('maxit', 1000, ...
+               'tol', 1e-4);
+verbose = 0;
 
 %% Generate data
-x = randi(2,[N,1]) - 1;
-Z = randn(N);
-Y = factor * (x * x') + Z;
+[x, Y, Z] = gen_data(N, lambda);
+
+if verbose > 0
+    figure(1);
+    stem(x);
+    axis([0, N, min(x) - 0.1, max(x) + 0.1])
+end
 
 %% Define the hamiltonian
-hamiltonian = @(x) sum(sum(triu((Y - factor * (x * x')), 1) .^ 2));
+ham = @(x) hamiltonian(x, Y, lambda);
 
 %% Run chain
-[xr, h] = glauber([], Y, lambda, beta, hamiltonian, param);
+[xr, h] = glauber(x0, Y, lambda, beta, ham, param, verbose);
 
 %% Check sample
 n_diff = sum(sum(x ~= xr));
-fprintf('Number of differences: %d \n', n_diff);
+pct_diff = 100 .* (n_diff ./ N);
+fprintf('Difference between x and xr: %2.1d%% \n', pct_diff);
 
-figure(1);
-subplot(121);
-imagesc(x * x');
-title('xx^{T}');
-subplot(122);
-imagesc(xr * xr');
-title('x_{r}x_{r}^{T}');
+plot_matrices(x, Y, Z, xr);
 
-figure(2);
+figure('Position', [1149, 100, 1049, 895]);
 plot(h)
 xlabel('Iteration number');
 ylabel('Hamiltonian');
+grid on

@@ -1,13 +1,13 @@
-function [x, h] = glauber(x0, Y, lambda, beta, hamiltonian, param)
+function [x, h] = glauber(x0, Y, lambda, beta, ham, param, verbose)
 % GLAUBER recovers the vector x generating the non-linear noisy observation
-% Y by running a Glauber chain from initial state x_0.
+% Y by running a Glauber chain from initial state x0.
 % 
 %   Usage:
 %       [x, h] = glauber(x0, Y, lambda, beta, hamiltonian, param)
 %
 %   Input:
-%       x_0 : vector
-%           Initial state of the chain.
+%       x0 : vector
+%           (Optional) Initial state of the chain.
 %       Y : matrix
 %           Non-linear noisy observations.
 %       lambda: float
@@ -15,14 +15,16 @@ function [x, h] = glauber(x0, Y, lambda, beta, hamiltonian, param)
 %           observations.
 %       beta : float
 %           Inverse temperature in the Gibbs-Boltzman distribution of x.
-%       hamiltonian: function_handle
+%       ham: function_handle
 %           Hamiltonian of the Gibbs-Boltzman distribution of x.
 %       param : structure
-%           Additional parameters.
+%           (Optional) Additional parameters.
 %           maxit : int
 %               Maximum number of iterations of the chain.
 %           tol : float
 %               Tolerance on the Hamiltonian of the solution.
+%       verbose : >= 0
+%           Level of verbose.
 %         
 %   Output:
 %       x : vector
@@ -39,15 +41,15 @@ function [x, h] = glauber(x0, Y, lambda, beta, hamiltonian, param)
 %   References:
 %       
 %
-% Author(s): 
-% Date :
-% Testing: 
+% Author(s): Rodrigo Pena
+% Date : 01/12/2016
+% Testing: test_glauber.m
 
 %% Parse input
 [N, M] = size(Y);
 assert(N == M, 'Y must be a square matrix');
 
-if isempty(x0); x0 = randi(2,[N,1]) - 1; end
+if isempty(x0); x0 = 2 * randi([0, 1], [N, 1]) - 1; end
 x0 = x0(:); % Make sure we have a column vector.
 assert(length(x0) == N, ...
     'x0 must be a vector with the same length as the rows/columns of Y');
@@ -56,7 +58,7 @@ assert(lambda > 0, 'lambda must be greater than zero');
 
 assert(beta > 0, 'beta must be greater than zero.');
 
-assert(isa(hamiltonian, 'function_handle'), ...
+assert(isa(ham, 'function_handle'), ...
     'hamiltonian must be a function handle');
 
 if isempty(param); param = struct; end
@@ -64,13 +66,17 @@ assert(isa(param, 'struct'), 'param must be a structure');
 if ~isfield(param, 'maxit'); param.maxit = 1000; end
 if ~isfield(param, 'tol'); param.tol = 0; end
 
+if isempty(verbose); verbose = 0; end
+assert(verbose >= 0, ...
+    'verbose level should be greater than or equal to zero.');
+
 %% Initialization
 h = zeros(param.maxit, 1); 
 x = x0;
 
 % Define transition probabilities:
 p = @(x, i) 0.5 * ...
-    (1 + tanh(2*beta*sqrt(lambda/N)*(Y(i,:)*x - Y(i,i)*x(i))));
+    (1 + tanh(2 * beta * sqrt(lambda/N) * (Y(i,:)*x - Y(i,i)*x(i))));
 
 %% Run chain
 for n = 1:param.maxit
@@ -84,10 +90,24 @@ for n = 1:param.maxit
         x(i) = -1;
     end
     
-    h(n) = hamiltonian(x);
+    h(n) = ham(x);
     
     if h(n) <= param.tol
         break;
+    end
+    
+    if verbose > 0
+        if n == 1; figure(); end
+        stem(x);
+        hold on
+        stem(i, x(i), 'r');
+        axis([0, N, min(x) - 0.1, max(x) + 0.1])
+        hold off
+        title('$$x$$', ...
+              'interpreter', 'latex', ...
+              'FontSize', 20);
+        display('Press any key to continue');  
+        pause();
     end
 end
 

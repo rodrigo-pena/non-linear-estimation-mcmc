@@ -1,23 +1,52 @@
-function x = simulated_annealing(x_0, prob, chain_type)
-% SIMMULATED_ANNEALING draws a sample x from the (unnormalized) probability
-% distribution prob by running simmulated annealing on a Markov chain of 
-% type chain_type from initial state x_0.
+function [x, h, b] = simulated_annealing(x0, Y, lambda, beta0, ...
+                                         ham, beta_update, ...
+                                         chain_type, param)
+% SIMMULATED_ANNEALING recovers the vector x generating the non-linear 
+% noisy observation Y by running a chain_type Markov chain from initial
+% state x0.
 % 
 %   Usage:
-%       x = simmulated_annealing(x_0, prob, chain_type)
+%       [x, h] = simulated_annealing(x0, Y, lambda, beta0, hamiltonian, ...
+%                                    chain_type, param)
 %
 %   Input:
-%       x_0 : vector / matrix
-%           Initial state of the Metropolis chain
-%       prob : function handle
-%           (Unnormalized) probability distribution from which to sample
-%       chain_type: string
-%           'metropolis' : use Metropolis chain
-%           'glauber' :use Glauber chain
+%       x0 : vector
+%           (Optional) Initial state of the annealing.
+%       Y : matrix
+%           Non-linear noisy observations.
+%       lambda: float
+%           A fixed parameter in the generation of the non-linear
+%           observations.
+%       beta0 : float
+%           (Optional)Initial value for the inverse temperature in the 
+%           Gibbs-Boltzman distribution of x.
+%       ham: function_handle
+%           Hamiltonian of the Gibbs-Boltzman distribution of x.
+%       beta_update: function_handle
+%           (Optional) Update procedure for beta at each annealing 
+%           iteration.
+%       chain_type : string
+%           Type of Markov chain to use
+%           'metropolis' : Use the Metropolis chain.
+%           'glauber' : Use the Glauber chain.
+%       param : structure
+%           (Optional) Additional parameters.
+%           maxit_anneal : int
+%               Maximum number of iterations of the annealing.
+%           maxit : int
+%               Maximum number of iterations of the chain.
+%           tol_anneal : float
+%               Tolerance on the Hamiltonian of the annealing solution.
+%           tol : float
+%               Tolerance on the Hamiltonian of the chain sample.
 %         
 %   Output:
-%       x : vector / matrix
-%           Sample from the input distribution
+%       x : vector
+%           Recovered vector.
+%       h : vector
+%           The evaluation of the Hamiltonian at each iteration.
+%       b : vector
+%           The value of parameter beta at each iteration.
 %
 %   Examples:
 %       
@@ -31,4 +60,61 @@ function x = simulated_annealing(x_0, prob, chain_type)
 % Date :
 % Testing: 
 
+%% Parse input
+if isempty(beta0); beta0 = 1e-3; end 
+assert(beta0 > 0, 'beta0 must be greater than zero.');
+
+if isempty(beta_update); beta_update = @(b, n) naive_update(b, n); end 
+assert(isa(beta_update, 'function_handle'), ...
+    'beta_update must be a function handle.');
+
+if isempty(chain_type); chain_type = 'metropolis'; end
+assert(strcmp(chain_type, 'metropolis') | ...
+       strcmp(chain_type, 'glauber'), ...
+       'Allowed chain types are ''metropolis'' or ''glauber'' ')
+
+if isempty(param); param = struct; end
+assert(isa(param, 'struct'), 'param must be a structure');
+if ~isfield(param, 'maxit_anneal'); param.maxit_anneal = 1000; end
+if ~isfield(param, 'tol_anneal'); param.tol_anneal = 0; end
+
+%% Initialization
+h = cell(param.maxit_anneal, 1); 
+b = cell(param.maxit_anneal, 1);
+x = x0;
+beta = beta0;
+
+%% Run annealing
+for n = 1:param.maxit_anneal
+    
+    % Run Markov chain of type chain_type
+    switch chain_type
+        case 'metropolis'
+            [x, h{n}] = metropolis(x, Y, lambda, beta, ham, param);
+        case 'glauber'
+            [x, h{n}] = glauber(x, Y, lambda, beta, ham, param);
+    end
+    
+    b{n} = repmat(beta, [length(h{n}), 1]);
+    
+    % Increase beta
+    beta = beta_update(beta, n);
+    
+    % Stopping criterion
+    if h{n}(end) <= param.tol_anneal
+        break;
+    end
+
+end
+
+%% Postprocessing
+h = h(1:n); % Remove extra empty space
+h = cell2mat(h);
+b = b(1:n); % Remove extra empty space
+b = cell2mat(b);
+
+end
+
+function b_out = naive_update(b_in, ~)
+    b_out = 2 * b_in;
 end
