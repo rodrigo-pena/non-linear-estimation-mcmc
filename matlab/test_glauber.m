@@ -3,8 +3,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setup
 N = 50;
-lambda = 10 * N^2;
-beta = 0.4;
+lambda =  .01 * N^2;
+beta = 0.5;
 x0 = [];
 param = struct('maxit', 1000, ...
                'tol', 1e-4);
@@ -34,6 +34,6 @@ plot_matrices(x, Y, Z, xr);
 
 figure('Position', [1149, 100, 1049, 895]);
 plot(h)
-xlabel('Iteration number');
-ylabel('Hamiltonian');
+xlabel('Iteration number', 'FontSize', 20);
+ylabel('Hamiltonian', 'FontSize', 20);
 grid on
