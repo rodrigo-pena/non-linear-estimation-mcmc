@@ -1,8 +1,9 @@
 function [x, h] = metropolis(x0, Y, lambda, beta, ham, param, verbose)
-% METROPOLIS draws a sample x from the (unnormalized) probability
+% METROPOLIS recovers the vector x generating the non-linear noisy 
+% observation Y by running a Metropolis chain from initial state x0.
 % 
 %   Usage:
-%       [x, h] = glauber(x0, Y, lambda, beta, hamiltonian, param)
+%       [x, h] = metropolis(x0, Y, lambda, beta, ham, param, verbose)
 %
 %   Input:
 %       x0 : vector
@@ -35,7 +36,7 @@ function [x, h] = metropolis(x0, Y, lambda, beta, ham, param, verbose)
 %   Examples:
 %       
 %          
-%   See also metropolis.m, simmulated_annealing.m
+%   See also glauber.m, simmulated_annealing.m
 %
 %   References:
 %       
@@ -74,16 +75,16 @@ h = zeros(param.maxit, 1);
 x = x0;
 
 % Define transition probabilities:
-p = @(x_t, x) min([ 1 , exp(-beta*(ham(x_t)-ham(x))) ]) ;
+p = @(x_t, x) min([ 1 , exp(-beta*(ham(x_t) - ham(x))) ]) ;
 
 %% Run chain
 for n = 1:param.maxit
     % Select vertex at random
     i = randi(N, 1);
-    x_t=x;
-    x_t(i)=-x(i);
+    x_t = x;
+    x_t(i) = -x(i);
     
-    % Accept positive or negative value reset
+    % Accept or reject component flip
     if p(x_t, x) >= rand(1)
         x = x_t;
     end

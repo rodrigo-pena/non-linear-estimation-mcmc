@@ -3,12 +3,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setup
 N = 50;
-lambda =  .01 * N^2;
+lambda = .01 * N^2;
 beta = 0.5;
 x0 = [];
 param = struct('maxit', 1000, ...
                'tol', 1e-4);
-verbose = 0;
+verbose = 1;
 
 %% Generate data
 [x, Y, Z] = gen_data(N, lambda);
