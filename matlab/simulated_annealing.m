@@ -97,9 +97,8 @@ for n = 1:param.maxit_anneal
             [x, h{n}] = glauber(x, Y, lambda, beta, ham, param, []);
     end
     
+    % Save beta, then increase it
     b{n} = repmat(beta, [length(h{n}), 1]);
-    
-    % Increase beta
     beta = beta_update(beta0, n);
     
     % Stopping criterion

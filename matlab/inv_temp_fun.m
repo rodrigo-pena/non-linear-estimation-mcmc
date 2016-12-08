@@ -26,11 +26,14 @@ function b = inv_temp_fun(b0, n, type)
 %   See also glauber.m, metropolis.m
 %
 %   References:
+%      https://www.mathworks.com/help/gads/simulated-annealing-options.html
 %       
 %
 % Author(s): Rodrigo Pena
 % Date : 02/12/2016
 % Testing: 
+
+if isempty(type); type = 'exp'; end
 
 switch type
     case 'exp'

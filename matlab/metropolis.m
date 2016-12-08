@@ -58,6 +58,7 @@ assert(lambda > 0, 'lambda must be greater than zero');
 
 assert(beta > 0, 'beta must be greater than zero.');
 
+if isempty(ham); ham = @(x) 1; end
 assert(isa(ham, 'function_handle'), ...
     'hamiltonian must be a function handle');
 
@@ -75,7 +76,16 @@ h = zeros(param.maxit, 1);
 x = x0;
 
 % Define transition probabilities:
-p = @(x_t, x) min([ 1 , exp(-beta*(ham(x_t) - ham(x))) ]) ;
+p = @(x_t, x, i) min([ 1 , exp(-beta*(ham(x_t) - ham(x))) ]) ;
+
+% This might be faster, because ham(x) is expensive to compute:
+% (What multiplies beta is exactly the difference between the two 
+% hamiltonians. But I'm not sure the expression is correct; it yields
+% values different from those in the above expression)
+%p = @(x_t, x, i) min( 1 , ...
+%   exp(-beta*(2.*x_t(i).*sqrt(lambda/N).*(Y(i,:)*x - Y(i,i)*x(i)))) ) ;
+
+
 
 %% Run chain
 for n = 1:param.maxit
@@ -85,7 +95,7 @@ for n = 1:param.maxit
     x_t(i) = -x(i);
     
     % Accept or reject component flip
-    if p(x_t, x) >= rand(1)
+    if p(x_t, x, i) >= rand(1)
         x = x_t;
     end
     

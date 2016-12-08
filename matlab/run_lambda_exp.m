@@ -7,22 +7,31 @@ function [mean_v, mean_sq_e, SDSE] = ...
 %                         run_lambda_exp(N, lambda_list, chain_type, beta0, param)
 %
 %   Input:
-%       N: size of the data
-%       lambda_list: list of the parameter lambda for the experiment
-%       chain_type: function_handle
-%           Hamiltonian of the Gibbs-Boltzman distribution of x
-%       beta0: float
+%       N: int
+%           Size of the data.
+%       lambda_list: vector
+%           List of parameter lambda for the experiment.
+%       chain_type : string
+%           Type of Markov chain to use
+%           'metropolis' : Use the Metropolis chain.
+%           'glauber' : Use the Glauber chain.
+%       beta0 : float
+%           Initial value for the inverse temperature.
 %       param: structure
-%           (Optional) Additional parameters.
+%           (Optional) Additional parameters. See simulated_annealing.m
 %         
 %   Output:
-%       --
+%       mean_v: vector
+%           List of mean values of energy, one for each lambda 
+%       mean_sq_e: vector
+%           List of mean squared errors, one for each lambda 
+%       SDSE: vector
+%           List of standard deviations of the squared error, one for each
+%           lambda 
 %       
 %   Examples:
-%       mean_v: list of mean values of energy for a given lambda 
-%       mean_sq_e: list of mean squared error for a given lambda 
-%       SDSE: list of standard deviation of the squared error
-%             for a given lambda
+%
+%
 %   References:
 %       
 %
@@ -34,36 +43,40 @@ function [mean_v, mean_sq_e, SDSE] = ...
 %% Parse input
 if isempty(param); param = struct; end
 assert(isa(param, 'struct'), 'param must be a structure');
+if ~isfield(param, 'n_gen_data'); param.n_gen_data = 20; end
 assert(all(lambda_list > 0), 'lambda must be greater than zero');
 assert(size(lambda_list, 1) == 1, 'lambda_list must be a vector');
 
 %% Initialization
-len_lambda = size(lambda_list,2);
+len_lambda = size(lambda_list, 2);
 mean_v = zeros(1, len_lambda);
 mean_sq_e = zeros(1, len_lambda);
 SDSE = zeros(1, len_lambda);
 
+% Define the beta_update function
+beta_update = @(b, n) inv_temp_fun(b, n, 'exp');
+
 %% Generating of mean energy, mean SE, mean SDSE
 for ind_lambda = 1:len_lambda
+    
     lambda = lambda_list(ind_lambda);
-    result_h = zeros(param.n_gen_data,1);
-    result_SE = zeros(param.n_gen_data,1);
-    for ind_exp=1:1:param.n_gen_data
-        [x, Y, Z] = gen_data(N, lambda);
-        %% Define the hamiltonian and beta_update functions
-        ham = @(x) hamiltonian(x, Y, lambda);
-        beta_update = @(b, n) inv_temp_fun(b, n, 'exp');
+    result_h = zeros(param.n_gen_data, 1);
+    result_SE = zeros(param.n_gen_data, 1);
+    
+    for ind_exp = 1:param.n_gen_data
+        [x, Y, ~] = gen_data(N, lambda);
 
-        %% Run annealing
-        [xr, h, b] = simulated_annealing([], Y, lambda, beta0, ham, ...
-                                         beta_update, ...
-                                         chain_type, param);
-        result_h(ind_exp) = 1.* h(end) ./ N;
+        % Run annealing
+        [xr, ~, ~] = simulated_annealing([], Y, lambda, beta0, [], ...
+                                         beta_update, chain_type, param);
+                                     
+        result_h(ind_exp) = hamiltonian(xr, Y, lambda) ./ N;
         result_SE(ind_exp) = sum((xr - x) .^2) ./ N;
     end
+    
     mean_v(ind_lambda) = mean(result_h);
     mean_sq_e(ind_lambda) = mean(result_SE);
-    SDSE(ind_lambda) = get_SDSE(result_SE);
+    SDSE(ind_lambda) = std(result_SE);
 end
 
 

@@ -58,6 +58,7 @@ assert(lambda > 0, 'lambda must be greater than zero');
 
 assert(beta > 0, 'beta must be greater than zero.');
 
+if isempty(ham); ham = @(x) 1; end
 assert(isa(ham, 'function_handle'), ...
     'hamiltonian must be a function handle');
 

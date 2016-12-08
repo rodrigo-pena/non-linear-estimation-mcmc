@@ -6,8 +6,8 @@ N = 50;
 lambda =  .01 * N^2;
 beta = 0.5;
 x0 = [];
-param = struct('maxit', 1000, ...
-               'tol', 1e-4);
+param = struct('maxit', 2.*N, ...
+               'tol', 0);
 verbose = 0;
 
 %% Generate data
