@@ -11,7 +11,7 @@ N = length(x);
 %M = M - diag(diag(M));
 %h = sum(M(:)) / 2;
 
-h = sum(sum(triu((Y - sqrt(lambda / N) .* (x * x')) .^ 2, 2)));
+h = sum(sum(triu((Y - sqrt(lambda / N) .* (x * x')) .^ 2, 1)));
 
 end
 
