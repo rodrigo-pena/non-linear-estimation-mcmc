@@ -14,7 +14,7 @@ param = struct('maxit_anneal', 100, ...
 
 %% Run lambda exp
 %lambda_list = (1:10:N);
-lambda_list = logspace(0, 2*log10(N), 20);
+lambda_list = logspace(0, 2*log10(N/10), 20);
 [mean_v, mean_sq_e, SDSE] = run_lambda_exp(N, lambda_list, chain_type, ...
                                            beta0, param);
 
