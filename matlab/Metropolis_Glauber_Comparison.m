@@ -12,11 +12,13 @@ numIt = 10; % #loops/signal_size
 
 k=1;
 for N=initial_N:step_N:final_N
-    
+    disp('Iteration:')
+    k
     for i =1:numIt
         
         %Parameters
-        lambda = 0.01 * N.^2;
+        %lambda = 0.01 * N.^2;
+        lambda = 0.0001 * N;
         beta0 = 1e-3;
 
         % Generate data
@@ -37,7 +39,7 @@ for N=initial_N:step_N:final_N
                        'tol', 0);
         % Run annealing Metropolis
         tic
-        [xM, hM, bM] = simulated_annealing([], Y, lambda, beta0, ham, bup, chain_type, param);
+        [xM, hM, bM] = simulated_annealing([], Y, lambda, beta0, [], bup, chain_type, param);
         tM = toc;
         
         % Glauber
@@ -48,20 +50,20 @@ for N=initial_N:step_N:final_N
                        'tol', 0);
         % Run annealing Glauber
         tic
-        [xG, hG, bG] = simulated_annealing([], Y, lambda, beta0, ham, bup, chain_type, param);
+        [xG, hG, bG] = simulated_annealing([], Y, lambda, beta0, [], bup, chain_type, param);
         tG = toc;
 
         % Save results
                
         % Metropolis Recovered "x" , Hamiltonian, Execution Time
-        xMT(i,k)=sum((xM-x).^2)/N;
-        hMT(i,k)=hM(end);
-        tMT(i,k)=tM;
+        xMT(k,i)=min(sum((xM+x).^2)/N,sum((xM-x).^2)/N);
+        hMT(k,i)=ham(xM);
+        tMT(k,i)=tM;
         
         % Glauber Recovered "x" and Hamiltonian, Execution Time
-        xGT(i,k)=sum((xG-x).^2)/N;
-        hGT(i,k)=hG(end);
-        tGT(i,k)=tG;
+        xGT(k,i)=min(sum((xG+x).^2)/N,sum((xG-x).^2)/N);
+        hGT(k,i)=ham(xG);
+        tGT(k,i)=tG;
         
         
     end
@@ -76,12 +78,37 @@ timeM = mean(tMT,2);
 
 
 %Glauber
-sQerrorG = mean(xMT,2);
+sQerrorG = mean(xGT,2);
 hamG = mean(hGT,2);
-timeG = mean(tMT,2);
+timeG = mean(tGT,2);
 
 %Plot
 
+%% Mean Square Error
+figure();
+plot(initial_N:step_N:final_N, sQerrorM(:),initial_N:step_N:final_N, sQerrorG(:))
+xlabel('Signal Size');
+ylabel('Mean Square Error');
+legend('Metropolis','Glauber')
+grid on
+
+%% Hamiltonian
+figure();
+plot(initial_N:step_N:final_N, hamM(:),initial_N:step_N:final_N, hamG(:))
+xlabel('Signal Size');
+ylabel('Final Hamiltonian');
+legend('Metropolis','Glauber')
+grid on
+
+%% Time
+figure();
+plot(initial_N:step_N:final_N, timeM(:),initial_N:step_N:final_N, timeG(:))
+xlabel('Signal Size');
+ylabel('Average Execution Time (s)');
+legend('Metropolis','Glauber')
+grid on
+
+%{
 %% Mean Square Error
 figure('Position', [1149, 100, 1049, 895]);
 
@@ -126,5 +153,5 @@ plot(initial_N:step_N:final_N, timeG(:))
 xlabel('Signal Size');
 ylabel('Average Execution Time');
 grid on
-
+%}
 
