@@ -8,7 +8,7 @@ beta = 0.5;
 x0 = [];
 param = struct('maxit', 1000, ...
                'tol', 1e-4);
-verbose = 1;
+verbose = 0;
 
 %% Generate data
 [x, Y, Z] = gen_data(N, lambda);

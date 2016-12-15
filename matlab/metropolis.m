@@ -76,8 +76,8 @@ h = zeros(param.maxit, 1);
 x = x0;
 
 % Define transition probabilities:
-%p = @(x_t, x, i) min([ 1 , exp(-beta*(ham(x_t) - ham(x))) ]) ;
-p = @(x_t, x, i) min([ 1 , exp(-beta*( fast_ham_diff(Y,x_t,x,i) )) ]) ;
+p = @(x_t, x, i) min([ 1 , exp(-beta*(ham(x_t) - ham(x))) ]) ;
+%p = @(x_t, x, i) min([ 1 , exp(-beta*( fast_ham_diff(Y,x_t,x,i,lambda) )) ]) ;
 % This might be faster, because ham(x) is expensive to compute:
 % (What multiplies beta is exactly the difference between the two 
 % hamiltonians. But I'm not sure the expression is correct; it yields
