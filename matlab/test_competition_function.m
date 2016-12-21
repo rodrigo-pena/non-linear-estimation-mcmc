@@ -6,13 +6,12 @@
 N = 2000;%2000 and time 15
 lambda = 0.01 * N.^2;
 chain_c = 'glauber';
-time_full = 15; %time in seconds
+time_full = 10; %time in seconds
 
 %% Generate data
 [x, Y, Z] = gen_data(N, lambda);
 
 %% Run annealing
-
 tic
 [xr, h, b] = competition_outer_function(Y, chain_c,time_full);
 toc

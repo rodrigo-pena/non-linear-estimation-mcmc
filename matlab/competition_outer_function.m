@@ -14,8 +14,10 @@ time_per_iteration = time_test/Ntest;
 
 
 %% Calculate results
+
 Nfull = floor(time_full/time_per_iteration)
 time_to_run = Nfull*time_per_iteration
+
 calc_ham = 1;
 [x,h,b] = competition_inner_function(Y, chain_c,Nfull,calc_ham);
 
