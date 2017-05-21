@@ -23,8 +23,11 @@ ham = @(x) hamiltonian(x, Y, lambda);
 bup = @(b, n) inv_temp_fun(b, n, 'exp');
 
 %% Run annealing
+
+tic
 [xr, h, b] = simulated_annealing([], Y, lambda, beta0, ham, bup, ...
                                  chain_type, param);
+toc
 
 %% Check sample
 n_diff = sum(sum(x ~= xr));
